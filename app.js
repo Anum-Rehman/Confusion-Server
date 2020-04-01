@@ -29,6 +29,36 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+
+function auth(req,res,next){
+  console.log(req.headers);
+
+  var authHeader = req.headers.authorization
+  if(!authHeader){
+    var err = new Error('You are not authenticated!');
+    res.setHeader('www-Authenticate','Basic');
+    err.status = 401;
+    return next(err);
+  }
+  //Buffer allows us to split value and to encode it
+  var auth = new Buffer(authHeader.split(' ')[1], 'base64').toString().split(':') //the second split is to split username and password
+
+  var username = auth[0];
+  var password = auth[1];
+
+  if(username === 'admin' && password === 'password'){
+    next();
+  }
+  else{
+    var err = new Error('You are not authenticated!');
+    res.setHeader('www-Authenticate','Basic');
+    err.status = 401;
+    return next(err);
+  }
+}
+
+app.use(auth);
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
