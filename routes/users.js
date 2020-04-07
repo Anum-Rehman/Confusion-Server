@@ -9,8 +9,16 @@ var router = express.Router();
 router.use(bodyParser.json())
 
 /* GET users listing. */
-router.get('/', function(req, res, next) {
-  res.send('respond with a resource');
+router.route('/')
+.get(authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+    console.log(req.user,"req.user")
+    User.find({})
+    .then((users) => {
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.json(users);
+    }, (err) => next(err))
+    .catch((err) => next(err));
 });
 
 router.post('/signup', function(req,res,next){
@@ -30,8 +38,8 @@ router.post('/signup', function(req,res,next){
       user.save((err, user)=>{
         if(err){
           res.statusCode = 500;
-      res.setHeader('Content-Type','application/json');
-      res.json({err : err})
+          res.setHeader('Content-Type','application/json');
+          res.json({err : err})
       return  
         }
         passport.authenticate('local')(req,res, ()=>{
@@ -51,7 +59,7 @@ router.post('/login', passport.authenticate('local'), (req,res,next)=>{
   res.json({success: true, token: token, status: 'You are successfully logged in!'});
 });
 
-router.get('/logout', (req,res)=>{
+router.get('/logout', (req,res,next)=>{
   if(req.session){
     req.session.destroy();
     res.clearCookie('session-id');
